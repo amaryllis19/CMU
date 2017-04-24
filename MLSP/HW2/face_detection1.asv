@@ -1,0 +1,99 @@
+% face detection %
+clear all
+clc
+
+corpus = 'C:\Users\amaryllis\Documents\MATLAB\MLSP\HW2\lfw1000';
+[eigfaces] = compute_eigen_faces(corpus,10);
+
+corpus_train_face = 'C:\Users\amaryllis\Documents\MATLAB\MLSP\HW2\BoostingData\train\face';
+ X1 = [];
+    
+    files1 = dir(fullfile(corpus_train_face,'*.pgm'));
+    for i = 1:length(files1)
+        C1 = imread([corpus_train_face,filesep,files1(i).name]);
+        D1 = imresize(C1, [64 64]);
+        E1 = im2double(D1);
+        F1 = histeq(E1);
+        X1 = [X1;F1(:)'];
+    end
+    
+    norm_X1 = repmat(sqrt(sum(power(X1,2),2)),1,size(eigfaces,1));
+    W_face = (X1 * eigfaces')./norm_X1;
+    Y1 = ones(size(W_face,1),1);
+    
+corpus_train_nface = 'C:\Users\amaryllis\Documents\MATLAB\MLSP\HW2\BoostingData\train\non-face';
+    X2 = [];
+    
+    files2 = dir(fullfile(corpus_train_nface,'*.pgm'));
+    for i = 1:length(files2)
+        C2 = imread([corpus_train_nface,filesep,files2(i).name]);
+        D2 = imresize(C2, [64 64]);
+        E2 = im2double(D2);
+        F2 = histeq(E2);
+        X2 = [X2;F2(:)'];
+    end
+    
+    norm_X2 = repmat(sqrt(sum(power(X2,2),2)),1,size(eigfaces,1));
+    W_nface = (X2 * eigfaces')./norm_X2;
+    Y2 = ones(size(W_nface,1),1)*(-1);
+    
+    train_data = [W_face;W_nface];
+    train_class = [Y1;Y2];
+    
+    T = 2;
+    
+    [classifier] = adaboost(train_data,train_class,T);
+    
+    clear X1 X2 Y1 Y2;
+    
+corpus_test_face = 'C:\Users\amaryllis\Documents\MATLAB\MLSP\HW2\BoostingData\test\face';
+    X1 = [];
+    
+    files1 = dir(fullfile(corpus_test_face,'*.pgm'));
+    for i = 1:length(files1)
+        C1 = imread([corpus_test_face,filesep,files1(i).name]);
+        D1 = im2double(C1);
+        E1 = histeq(D1);
+        X1 = [X1;E1(:)'];
+    end
+    
+    W_face = (X1 * eigfaces')./norm(X1);
+    Y1 = ones(size(W_face,1),1);
+ 
+corpus_test_nface = 'C:\Users\amaryllis\Documents\MATLAB\MLSP\HW2\BoostingData\test\non-face';
+    X2 = [];
+    
+    files2 = dir(fullfile(corpus_test_nface,'*.pgm'));
+    for i = 1:length(files2)
+        C2 = imread([corpus_test_nface,filesep,files2(i).name]);
+        D2 = im2double(C2);
+        E2 = histeq(D2);
+        X2 = [X2;E2(:)'];
+    end
+    
+    W_nface = (X2 * eigfaces')./norm(X2);
+    Y2 = ones(size(W_nface,1),1)*(-1);
+    
+    test_data = [W_face;W_nface];
+    test_class = [Y1;Y2];
+    
+    Y_class = (2*(test_data(:,classifier(:,2)) > repmat(classifier(:,3),size(test_data,1),1)) - 1) * ones(size(test_data,1),1) * (1 - classifier(:,4)')
+            + (2*(test_data(:,classifier(:,2)) < repmat(classifier(:,3),size(test_data,1),1)) - 1) * ones(size(test_data,1),1) * (classifier(:,4)');
+    
+    %error of ith weak classifier%
+    error = Y_class ~= repmat(test_class,1,size(Y_class,2));
+    figure(1);
+    plot(error);
+    title('error of ith weak classifier');
+    xlabel('');
+    
+    %error of strong classifier%
+    Y_final = Y_class * repmat(classifier(:,1),size(test_data,1),1);
+    Y_sum = sum(Y_final,2);
+    Y_final_class = sign(Y_sum);
+    
+    Yf_error = Y_final_class ~= test_class;
+    figure(2);
+    plot(Yf_error);
+    
+            

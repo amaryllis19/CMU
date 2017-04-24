@@ -1,0 +1,51 @@
+%k-means clustering
+clear all
+clc
+
+ yeast1 = importdata('yeast1.txt');
+ yeast1_data = yeast1.data;
+ yeast1_textdata = yeast1.textdata;
+ 
+ k = 4;
+ 
+ D1 = min(min(yeast1_data))
+ D2 = max(max(yeast1_data))
+ 
+ m = 1;
+ k_centers_j = [];
+ k_centers = [];
+ 
+while(true)
+   if(m==1)
+      k_centers = D1 + (D2-D1)*rand(k,size(yeast1_data,2));
+      m = 0;
+   end
+   
+   Dist = zeros(size(yeast1_data,1),size(k_centers,1));
+   
+   for i = 1:size(k_centers,1)
+     Dist(:,i) = sqrt(sum(((yeast1_data - repmat(k_centers(i,:),size(yeast1_data,1),1)).^2),2))
+   end
+
+   [C,I] = min(Dist,[],2)
+   R = [C I]
+   unqI = unique(I)
+
+   if(numel(unqI)~=k)
+    m = 1;
+    continue;
+   end
+ 
+   k_centers_j = k_centers;
+   
+   for i = unqI'   
+    f_cluster = find(R(:,2)==i)
+    k_centers(i,:) = mean(yeast1_data(f_cluster',:),1)
+   end
+ 
+   %second check condition to break out
+   if(all(k_centers_j == k_centers,2))
+      break;
+   end
+      
+end

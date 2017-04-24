@@ -1,0 +1,57 @@
+% EM problem 4A %
+% Z = pair of dices selected (1,2) (1,3) (2,3)
+% X = sum of 2 dices that was called out
+
+% EM update equations %
+% P(Z/X) = P(X/Z)*P(Z) = C * P(X/Z)*P(Z), where C = constant
+%          -----------
+%             P(X)
+% 
+% P(X/Z) = C*Nx*P(Z/X), where C=constant
+% P(Z) = C* Ex(Nx * P(Z/X))
+clear all
+clc
+
+load('data.mat')
+
+% Initial P(Z) for all Z
+I_Pz = [1/3 1/3 1/3];
+
+% Initial P(X/Z) for all X and Z
+I_Px2z = 1/16*ones(1,3);
+I_Px3z = [2/16 2/16 2/16];
+I_Px4z = [3/16 3/16 3/16];
+I_Px5z = [4/16 4/16 4/16];
+I_Px6z = [3/16 3/16 3/16];
+I_Px7z = [2/16 2/16 2/16];
+I_Px8z = [1/16 1/16 1/16];
+
+I_Pxz = [I_Px2z;I_Px3z;I_Px4z;I_Px5z;I_Px6z;I_Px7z;I_Px8z;]
+
+%Initial Estimate of P(Z/X)
+Est_Pzx = I_Pxz .* repmat(I_Pz,size(I_Pxz,1),1);
+Est_Pzx = Est_Pzx ./ repmat(sum(Est_Pzx,2),1,size(Est_Pzx,2));
+
+% Sum of No. of observations of each value of X
+Nx2 = sum(2==obsStream);
+Nx3 = sum(3==obsStream);
+Nx4 = sum(4==obsStream);
+Nx5 = sum(5==obsStream);
+Nx6 = sum(6==obsStream);
+Nx7 = sum(7==obsStream);
+Nx8 = sum(8==obsStream);
+
+Nx = [Nx2;Nx3;Nx4;Nx5;Nx6;Nx7;Nx8]
+
+for i = 1:10
+    %Recompute P(X/Z) using the estimated P(Z/X) and Nx
+    P_XgZ = repmat(Nx,1,size(Est_Pzx,2)) .* Est_Pzx;
+    P_XgZ = P_XgZ ./ repmat(sum(P_XgZ,1),size(Est_Pzx,1),1)
+
+    %Recompute P(Z) using the estimated P(Z/Z) and Nx
+    P_Z = sum(P_XgZ,1) ./ repmat(sum(sum(P_XgZ,1),2),1,size(I_Pz,2))
+
+    %New Estimate of P(Z/X)
+    Est_Pzx = P_XgZ .* repmat(P_Z,size(I_Pxz,1),1);keyboard
+    Est_Pzx = Est_Pzx ./ repmat(sum(Est_Pzx,2),1,size(Est_Pzx,2))
+end

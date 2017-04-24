@@ -1,0 +1,34 @@
+function [tst_class] = knn(trn,trn_class,tst,k)
+
+    % size(trn)=[N,P]       where N = number of training data points
+    %                             P = spatial dimension of training data point
+    % size(trn_class)=[N,1] where N = number of training data points
+    % size(tst)=[M,P]       where M = number of test data points
+    %                             P = spatial dimension of test data points
+    % size(dst)=[N,M]       where N = number of training data points
+    %                             M = number of test data points
+    dst = zeros(size(trn,1),size(tst,1)); 
+    for i = 1:size(dst,2)
+        dst(:,i) = sqrt(sum((ones(size(trn,1),1) * tst(i,:) - trn) .^ 2, 2));
+    end
+
+%     dst
+    dst_aux = dst;
+    % 1-nn : tst_class = trn_class(index)
+   
+    tst_class_m = zeros(k,size(tst,1));
+    
+    for j = 1:k
+        [min_dst, index] = min(dst_aux); 
+        tst_class_m(j,:) = trn_class(index);
+        for i = 1:size(dst,2)
+            dst_aux(index(i),i) = Inf;
+        end
+%           dst_aux
+%           tst_class_m
+    end
+%      tst_class_m;
+    
+    tst_class = mode(tst_class_m,1);
+    
+%end

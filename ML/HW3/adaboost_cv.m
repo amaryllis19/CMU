@@ -1,0 +1,49 @@
+% adaboost cross validation
+clear all;
+clc;
+close all;
+
+load('ps3-data.mat');
+
+trn_error = zeros(80,10);
+tst_error = zeros(80,10);
+
+auxX = X;
+auxY = Y;
+
+% cross validate for optimal number of iterations
+for i=1:10
+
+    t = ((i-1)*34)+1:i*34;
+    cv_s = auxX(t,:);
+    cv_c = auxY(t,:);
+    
+    r = [1:((i-1)*34) (i*34)+1:size(X,1)]; 
+    trn_s = auxX(r,:);
+    trn_c = auxY(r,:);
+    
+    % training and test errors for each iteration from the adaboost
+    % classifier
+    [trn_error(:,i),tst_error(:,i)] = adaboost_classifier1(trn_s,trn_c,cv_s,cv_c);
+    
+end
+
+mean_trn_error = mean(trn_error,2);
+std_trn_error = std(trn_error,0,2);
+    
+mean_tst_error = mean(tst_error,2);
+std_tst_error = std(tst_error,0,2);
+
+figure(1);
+
+% graph plot of the mean and standard deviations of training and test
+% errors
+errorbar(1:80,mean_trn_error,std_trn_error,'r');
+hold on;
+errorbar(1:80,mean_tst_error,std_tst_error,'b');
+title('mean and std. for training and test errors along iterations')
+xlabel('iterations');
+ylabel('training/test errors');
+legend('train','test');
+
+

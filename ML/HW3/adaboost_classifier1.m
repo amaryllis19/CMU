@@ -1,0 +1,84 @@
+% AdaBoost Algorithm %
+function [error_adaboost_trn,error_adaboost_tst] = adaboost_classifier1(X,Y,X_test,Y_test) 
+N = size(X,1);  % number of data points
+F = size(X,2);   % feature space / dimensions
+M = 80;         % number of iterations
+
+J_error = zeros(N-1,1);
+J = zeros(F,1);
+threshold = zeros(F,1);
+error = zeros(M,1);
+final_f = zeros(M,1);
+v = zeros(M,1);
+Y_class_f = zeros(N,M);
+
+% Initialize the data weighting coefficients - Wn
+W = 1/N * ones(N,1);
+
+% Training M robot agents (i.e. M weak learners)
+for m = 1:M
+    % fit a classifier to the training data, 
+    % one attribute/feature at a time
+    for j = 1:F
+        X_sort = sort(X(:,j));
+        D_stump = (X_sort(1:end-1)+X_sort(2:end))/2;
+        
+        % find the optimal decision stump / threshold
+        for k = 1:N-1
+            Y_class1 = (2 * (X(:,j) > D_stump(k))) - 1;
+            I_class1 = (Y_class1 ~= Y);
+            J_error_aux1 = sum(W .* I_class1);
+
+            Y_class2 = (2 * (X(:,j) < D_stump(k))) - 1;
+            I_class2 = (Y_class2 ~= Y);
+            J_error_aux2 = sum(W .* I_class2);
+            if J_error_aux1<J_error_aux2
+                J_error(k)=J_error_aux1;
+                decision_stump_type(k)=0;
+            else
+                J_error(k)=J_error_aux2;
+                decision_stump_type(k)=1;
+            end
+        end
+        [J(j),index] = min(J_error);
+        threshold(j) = D_stump(index);
+        type(j) = decision_stump_type(index);
+    end
+    [error(m),final_f(m)] = min(J);
+    
+    % evaluate the quantities - threshold and feature
+    v(m) = threshold(final_f(m));
+    final_type(m) = type(final_f(m));
+    
+    Y_classn_trn = ((2 * (X(:,final_f(m)) > v(m))) - 1) *(1-final_type(m))+((2 * (X(:,final_f(m)) < v(m))) - 1) *final_type(m);
+    I_classn_trn = (Y_classn_trn ~= Y);
+    
+    epsilon = sum(W .* I_classn_trn)/sum(W);
+    
+    alpha = log((1-epsilon)/epsilon);
+ 
+    % evaluate data weighting coefficients
+    W = W .* exp(alpha .* I_classn_trn);
+
+    % calculate the final clasifier
+    Y_class_f(:,m) = alpha .* Y_classn_trn;
+    
+    Y_m = sum(Y_class_f,2);
+
+    % final classifier
+    Y_f = sign(Y_m);
+    error_adaboost_trn(m,1) = sum(Y_f~=Y);
+    
+    %test classifier
+    Y_classn_tst = ((2 * (X_test(:,final_f(m)) > v(m))) - 1) *(1-final_type(m))+((2 * (X_test(:,final_f(m)) < v(m))) - 1) *final_type(m);
+    Y_class_f_tst(:,m) = alpha .* Y_classn_tst;
+    Y_m_tst = sum(Y_class_f_tst,2);
+    Y_f_tst = sign(Y_m_tst);
+    error_adaboost_tst(m,1) = sum(Y_f_tst ~= Y_test);
+    
+end
+
+ 
+end
+
+

@@ -1,0 +1,61 @@
+% %ambiguous data as negative
+% %%%train_set(:,2)=[];
+% ambiguous_context1 = [0;3003;5199;5101];
+% ambiguous_context2 = [0;5103;2901;2902];
+% working_set_1 = train_set;
+% for i=ambiguous_context1'
+% [m,n]=find(working_set_1(:,2)==i);
+% working_set_1(m,2)=0;
+% end
+% 
+% [m,n]=find(working_set_1(:,2)==3004);
+% working_set_1(m,2)=1;
+% 
+% [m,n]=find(working_set_1(:,2)~=1);
+% working_set_1(m,2)=0;
+% 
+% working_set_2 = train_set;
+% for i=ambiguous_context2'
+% [m,n]=find(working_set_2(:,2)==i);
+% working_set_2(m,2)=0;
+% end
+% 
+% [m,n]=find(working_set_2(:,2)==5102);
+% working_set_2(m,2)=1;
+% 
+% [m,n]=find(working_set_2(:,2)~=1);
+% working_set_2(m,2)=0;
+
+
+% %%%%%for random positive negative labels of ambiguous data
+%%%train_set(:,2)=[];
+ambiguous_context1 = [0;3003;5199;5101];
+ambiguous_context2 = [0;5103;2901;2902];
+working_set_1 = train_set;
+for i=ambiguous_context1'
+[m,n]=find(working_set_1(:,2)==i);
+Index = shuffle(m,2);
+s = size(Index,1)/2;
+working_set_1(Index(1:s),2)=1;
+working_set_1(Index(s:end),2)=0;
+end
+
+[m,n]=find(working_set_1(:,2)==3004);
+working_set_1(m,2)=1;
+
+[m,n]=find(working_set_1(:,2)~=1);
+working_set_1(m,2)=0;
+
+working_set_2 = train_set;
+for i=ambiguous_context2'
+[m,n]=find(working_set_2(:,2)==i);
+working_set_2(rand(m),2)=1;
+[p,q]=find(working_set_2(m,2)~=1);
+working_set_1(p,2)=0;
+end
+
+[m,n]=find(working_set_2(:,2)==5102);
+working_set_2(m,2)=1;
+
+[m,n]=find(working_set_2(:,2)~=1);
+working_set_2(m,2)=0;

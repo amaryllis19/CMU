@@ -1,0 +1,121 @@
+%function [] = agglomerative_clustering(prem,k)
+
+tic
+%pret(1,:)=[];
+%powerload = [tran pret];
+
+powerload = [abs(tran(:,1)) sign(tran(:,1)).*tran(:,2)];
+%powerload = tran(:,1:3);
+%no. of observed clusters
+%k = 15;
+
+Dist = zeros(size(powerload,1),size(powerload,1));
+for i = 1:size(powerload,1)
+    Dist(:,i) = sqrt(sum(((powerload - repmat(powerload(i,:),size(powerload,1),1)).^2),2));
+end
+
+Dist_aux = Dist;
+Dist_aux(Dist_aux==0) = Inf;
+
+Ind = size(Dist_aux,1)+1;
+cluster_nu = [1:size(powerload,1)]';
+c_nu = cluster_nu;
+final_clusters = [];
+cluster_th = [];
+minD = 0;
+
+for i=1:size(Dist_aux,1)
+    Dist_aux(Dist_aux==0) = Inf;
+    
+    [minD,indexD] = min(Dist_aux(:));
+    [m,n] = ind2sub(size(Dist_aux),indexD);
+    
+    Dist_aux(Dist_aux==Inf) = 0;
+    
+    Dist_aux(:,min(m,n)) = max(Dist_aux(:,m),Dist_aux(:,n));
+    Dist_aux(min(m,n),:) = max(Dist_aux(m,:),Dist_aux(n,:));
+    
+    Dist_aux(:,max(m,n)) = Inf;
+    Dist_aux(max(m,n),:) = Inf;
+    Dist_aux(min(m,n),min(m,n)) = Inf;
+    c_nu(c_nu(:)==max(m,n)) = min(m,n);
+    cluster_nu = [cluster_nu c_nu]; 
+    cluster_th = [cluster_th;m n minD];
+    
+end
+
+cluster_th(end,:)=[];
+[H,T]=dendrogram(cluster_th);
+%gscatter(abs(tran(:,1)),sign(tran(:,1)).*tran(:,2),T);
+
+%threshold for 14 clusters
+threshold=0.07*max(cluster_th(:,3));
+%threshold2=0.015*max(cluster_th(:,3));
+
+[m,n] = find(cluster_th(:,3)>=threshold);
+cluster_index = cluster_nu(:,min(m));
+
+Xtran = powerload;
+%Xtran = [abs(tran(:,1)) sign(tran(:,1)).*tran(:,2)]
+
+clustercountz = length(unique(cluster_index));
+%clustercountz = 30;
+figure;
+hold on;
+colors = lines;
+j = 0;
+for i = unique(cluster_index)' 
+    j = j + 1;
+    pind = find(cluster_index==i);
+    tran(pind,4) = j;
+    Xtran(pind,3)= j;
+    scatter(Xtran(pind,1), Xtran(pind,2), 'CData', colors(j,:));
+    centers(i,1) = mean(Xtran(pind,1));
+    centers(i,2) = mean(Xtran(pind,2));
+end
+
+% threshold for 14 clusters
+% threshold=0.1*max(cluster_th(:,3))
+
+scatter(centers(:,1), centers(:,2), '+');
+
+% find centers that have high real power
+    find(centers(:,1) > 800) 
+if(centers(:,1) > 800 && centers(:,2) < -50)
+   
+end
+
+
+
+% threshold for lower reactive power : 
+% compute the centroid of each cluster - to come up with 
+% intercluster distance 
+% for i=1:clustercountz
+%     mind = find(Xtran(:,3)==i);
+%     pcl(i,:) = std(Xtran(mind,1:2));
+%     for j = 1:size(Xtran(mind,1:2),1)
+%         Dist(:,j) = sqrt(sum(((Xtran - repmat(Xtran(j,:),size(Xtran,1),1)).^2),2));
+%     end
+% end    
+
+%scatter(C(:,1), C(:,2), '+');
+hold off;
+
+
+% threshold for 14 clusters
+% threshold=0.1*max(cluster_th(:,3))
+
+% cluster(cluster_th,'maxclust',17);
+% dendrogram(cluster_th);
+%     threshold = cluster_th(Ind-k,3);
+%         %find clustered genes when k=5 or ?
+%         c_unq = unique(cluster_nu(:,Ind-k));
+%         yu = find(repmat(cluster_nu(:,Ind-k),1,size(c_unq,1))==repmat(c_unq',size(cluster_nu,1),1));
+%         [p,q] = ind2sub(size(Dist_aux),yu);
+%         Q = [p,q];
+% 
+%         q_unq = unique(q);
+
+toc
+
+%end
